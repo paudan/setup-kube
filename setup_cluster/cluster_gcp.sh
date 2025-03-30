@@ -1,0 +1,65 @@
+#!/bin/bash
+
+# Create network 
+gcloud compute networks create kubernetes-cluster --subnet-mode custom
+gcloud compute networks subnets create kubernetes \
+--network kubernetes-cluster \
+--range 10.240.0.0/24
+gcloud compute firewall-rules create kubernetes-cluster-allow-internal \
+--allow tcp,udp,icmp \
+--network kubernetes-cluster \
+--source-ranges 10.240.0.0/24,10.244.0.0/16
+gcloud compute firewall-rules create kubernetes-cluster-allow-external \
+--allow tcp:22,tcp:6443,icmp \
+--network kubernetes-cluster \
+--source-ranges 0.0.0.0/0
+
+# Reserve a public IP address for the controller
+gcloud compute addresses create kubernetes-controller \
+--region $(gcloud config get-value compute/region)
+PUBLIC_IP=$(gcloud compute addresses describe kubernetes-controller \
+--region $(gcloud config get-value compute/region) \
+--format 'value(address)')
+
+# Create controller and workers VMs
+gcloud compute instances create controller \
+--boot-disk-size 200GB \
+--can-ip-forward \
+--image-family ubuntu-2004-lts \
+--image-project ubuntu-os-cloud \
+--machine-type e2-medium \
+--private-network-ip 10.240.0.10 \
+--scopes compute-rw,storage-ro,service-management,service-control,logging-write,monitoring \
+--subnet kubernetes \
+--address $PUBLIC_IP
+for i in 0 1; do \
+gcloud compute instances create worker-${i} \
+--boot-disk-size 200GB \
+--can-ip-forward \
+--image-family ubuntu-2004-lts \
+--image-project ubuntu-os-cloud \
+--machine-type e2-small \
+--private-network-ip 10.240.0.2${i} \
+--scopes compute-rw,storage-ro,service-management,service-control,logging-write,monitoring \
+--subnet kubernetes; \
+done
+
+# Create NFS server to test PV
+gcloud filestore instances create nfs-server \
+--project=$(gcloud config get-value project) \
+--zone=$(gcloud config get-value compute/zone) \
+--tier=STANDARD \
+--file-share=name="vol1",capacity=1TB \
+--network=name="kubernetes-cluster"
+SHARE_IP = $(gcloud filestore instances describe nfs-server \
+--project=$(gcloud config get-value project) \
+--zone=$(gcloud config get-value compute/zone) \
+--format 'value(networks[0].ipAddresses[0])')
+SHARE_NAME = $(gcloud filestore instances describe nfs-server \
+--project=$(gcloud config get-value project) \
+--zone=$(gcloud config get-value compute/zone) \
+--format 'value(fileShares[0].name)')
+# Delete when not needed
+gcloud filestore instances delete nfs-server \
+--project=$(gcloud config get-value project) \
+--zone=$(gcloud config get-value compute/zone)

@@ -1,0 +1,62 @@
+CNI plugins: /etc/cni/net.d
+Kubelet client certificate: /var/lib/kubelet/pki/kubelet-client-current.pem
+Kubelet server certificate: /var/lib/kubelet/pki/kubelet.crt
+Kubelet config (systemd unit configuration): /usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf
+Kubelet config: /var/lib/kubelet/config.yaml
+Kubeadm config: /var/lib/kubelet/kubeadm-flags.env
+
+Certificates (API Server):
+In general: /etc/kubernetes/pki
+API Server Certificate: /etc/kubernetes/pki/apiserver.crt
+API Server private key: /etc/kubernetes/pki/apiserver.key
+Certification authority: /etc/kubernetes/pki/ca.crt
+Kubelet client certificate: /etc/kubernetes/pki/apiserver-kubelet-client.crt
+Kubelet client key: /etc/kubernetes/pki/apiserver-kubelet-client.key
+ETCD client certificate: /etc/kubernetes/pki/apiserver-etcd-client.crt
+ETCD client key: /etc/kubernetes/pki/apiserver-etcd-client.key
+Cluster signing cert file: /etc/kubernetes/pki/ca.crt (used by controller manager)
+Cluster signing key file: /etc/kubernetes/pki/ca.key (used by controller manager)
+
+Info:
+Get node information: kubectl get node worker-0 (name is worker-0)
+Get control plane information: kubectl get node controller (name is controller)
+kubectl logs etcd-master -n kube-system
+kubectl logs kube-apiserver-master -n kube-system
+journalctl kubelet.service
+
+Logs:
+/var/log/syslog
+Containers: /var/log/containers/$CONTAINER_NAME_$CONTAINER_ID
+Kubernetes pods:
+/var/log/kube-apiserver.log
+/var/log/kube-scheduler.log
+/var/log/kube-controller-manager.log
+Kube-proxy: /var/log/kube-proxy
+Kubelet: /var/log/kubelet.log 
+
+# Default ports:
+ETCD: 2379
+API: 6443
+
+ETCD:
+Data dir: /var/lib/etcd
+CA certificate: /etc/kubernetes/pki/etcd/ca.crt
+Server certificate: /etc/kubernetes/pki/etcd/server.crt 
+Key: /etc/kubernetes/pki/etcd/server.key
+
+Config:
+Inspect config: ps -aux | grep kubelet
+Kubelet service config: /var/lib/kubelet/config.yaml
+staticPodPath: /etc/kubernetes/manifests
+
+Service config files (including certificates):
+Kubernetes Admin: /etc/kubernetes/admin.conf
+Kubelet: /etc/kubernetes/kubelet.conf
+Controller Manager: /etc/kubernetes/controller-manager.conf
+Scheduler: /etc/kubernetes/scheduler.conf
+
+Command line options:
+/etc/kubernetes/manifests/etcd.yaml
+/etc/kubernetes/manifests/kube-apiserver.yaml
+/etc/kubernetes/manifests/kube-controller-manager.yaml
+/etc/kubernetes/manifests/kube-scheduler.yaml
