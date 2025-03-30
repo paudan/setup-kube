@@ -5,7 +5,7 @@ kubectl api-versions | grep certif
 # Create user john CSR
 openssl genrsa -out john.key 2048
 # Important: subj matters!
-openssl req -new -subj "/C=developer" \ -key john.key -out john.csr
+openssl req -new -subj "/C=developer" -key john.key -out john.csr
 # Sign user certificate and approve it
 USER_NAME="john-developer"
 cat <<EOF | kubectl apply -f -
