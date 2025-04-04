@@ -6,7 +6,7 @@ gcloud compute networks subnets create kubernetes \
 --network kubernetes-cluster \
 --range 10.240.0.0/24
 gcloud compute firewall-rules create kubernetes-cluster-allow-internal \
---allow tcp,udp,icmp \
+--allow tcp,udp,icmp,ipip \
 --network kubernetes-cluster \
 --source-ranges 10.240.0.0/24,10.244.0.0/16
 gcloud compute firewall-rules create kubernetes-cluster-allow-external \
