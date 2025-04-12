@@ -1,0 +1,30 @@
+apiVersion: node.k8s.io/v1
+kind: RuntimeClass
+metadata:
+  name: runsc-sandbox
+handler: runsc
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sandbox-pod
+spec:
+  runtimeClassName: runsc-sandbox
+  containers:
+  - name: busybox
+    image: busybox
+    command: ['sh', '-c', 'while true; do echo "Running..."; sleep 5; done']
+    securityContext:
+      privileged: true
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: non-sandbox-pod
+spec:
+  containers:
+  - name: busybox
+    image: busybox
+    command: ['sh', '-c', 'while true; do echo "Running..."; sleep 5; done']
+    securityContext:
+      privileged: true

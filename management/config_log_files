@@ -48,6 +48,7 @@ Config:
 Inspect config: ps -aux | grep kubelet
 Kubelet service config: /var/lib/kubelet/config.yaml
 staticPodPath: /etc/kubernetes/manifests
+Get kubeadm config files: find / | grep kubeadm
 
 Service config files (including certificates):
 Kubernetes Admin: /etc/kubernetes/admin.conf

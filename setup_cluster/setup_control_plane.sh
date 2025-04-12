@@ -28,6 +28,9 @@ sudo kubeadm init \
 --ignore-preflight-errors=NumCPU \
 --apiserver-cert-extra-sans=$KUBERNETES_PUBLIC_ADDRESS
 
+# Remove the taint
+kubectl taint nodes --all node-role.kubernetes.io/control-plane- || true
+
 # Set admin access to cluster
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config

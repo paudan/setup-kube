@@ -13,6 +13,10 @@ gcloud compute firewall-rules create kubernetes-cluster-allow-external \
 --allow tcp:22,tcp:6443,icmp \
 --network kubernetes-cluster \
 --source-ranges 0.0.0.0/0
+gcloud compute firewall-rules create kubernetes-cluster-allow-hubble \
+--allow tcp:4244-4245 \
+--network kubernetes-cluster \
+--source-ranges 0.0.0.0/0
 
 # Reserve a public IP address for the controller
 gcloud compute addresses create kubernetes-controller \
@@ -43,23 +47,3 @@ gcloud compute instances create worker-${i} \
 --scopes compute-rw,storage-ro,service-management,service-control,logging-write,monitoring \
 --subnet kubernetes; \
 done
-
-# Create NFS server to test PV
-gcloud filestore instances create nfs-server \
---project=$(gcloud config get-value project) \
---zone=$(gcloud config get-value compute/zone) \
---tier=STANDARD \
---file-share=name="vol1",capacity=1TB \
---network=name="kubernetes-cluster"
-SHARE_IP = $(gcloud filestore instances describe nfs-server \
---project=$(gcloud config get-value project) \
---zone=$(gcloud config get-value compute/zone) \
---format 'value(networks[0].ipAddresses[0])')
-SHARE_NAME = $(gcloud filestore instances describe nfs-server \
---project=$(gcloud config get-value project) \
---zone=$(gcloud config get-value compute/zone) \
---format 'value(fileShares[0].name)')
-# Delete when not needed
-gcloud filestore instances delete nfs-server \
---project=$(gcloud config get-value project) \
---zone=$(gcloud config get-value compute/zone)

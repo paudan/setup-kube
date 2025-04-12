@@ -30,3 +30,10 @@ sudo ETCDCTL_API=3 etcdctl \
 snapshot restore snapshot.db \
 --data-dir /root/default.etcd \
 --initial-cluster-token controlplane  >& restore_log.log
+
+# Get secret database-access from namespace green
+sudo ETCDCTL_API=3 etcdctl \
+   --cacert=/etc/kubernetes/pki/etcd/ca.crt   \
+   --cert=/etc/kubernetes/pki/etcd/server.crt \
+   --key=/etc/kubernetes/pki/etcd/server.key  \
+   get /registry/secrets/green/database-access
