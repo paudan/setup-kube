@@ -30,10 +30,14 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: plex-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   tls:
   - hosts:
     - echo.com
+    - webapp.com
     secretName: echo-ingress-tls
   rules:
   - host: webapp.com
@@ -58,5 +62,5 @@ spec:
               number: 3000
 EOF
 
-curl -k -v --resolve echo.com:$HTTPS_PORT:$WORKER_IP https://echo.com:$HTTPS_PORT/
-curl -k -v --resolve webapp.com:$HTTPS_PORT:$WORKER_IP https://webapp.com:$HTTPS_PORT
+curl -kv --resolve echo.com:$HTTPS_PORT:$WORKER_IP https://echo.com:$HTTPS_PORT/
+curl -kv --resolve webapp.com:$HTTPS_PORT:$WORKER_IP https://webapp.com:$HTTPS_PORT

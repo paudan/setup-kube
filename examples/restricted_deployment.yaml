@@ -1,0 +1,47 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: confidential
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: confidential-deployment
+  namespace: confidential
+  labels:
+    app: confidential-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: confidential-deployment
+  template:
+    metadata:
+      labels:
+        app: confidential-deployment
+    spec:
+      # Required for restricted pod security standard
+      securityContext:
+        runAsUser: 1000
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - image: busybox:1.32.0
+        command: ['sh', '-c', 'tail -f /dev/null']
+        imagePullPolicy: IfNotPresent
+        name: busybox
+        # Required for restricted pod security standard
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+      restartPolicy: Always
