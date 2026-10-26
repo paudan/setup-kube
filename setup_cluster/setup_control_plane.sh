@@ -1,6 +1,7 @@
 #!/bin/bash
 
-sudo swapoff -a
+# Required for kubernetes<1.36
+# sudo swapoff -a
 sudo modprobe overlay
 sudo modprobe br_netfilter
 
