@@ -67,23 +67,28 @@ mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
-# install helm
-curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
-sudo apt-get install apt-transport-https --yes
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
-sudo apt-get update
-sudo apt-get install helm
-
 # Install Calico addon
-kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+# Traditional way
+# kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+# kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.33.0/manifests/v3_projectcalico_org.yaml
+# kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.33.0/manifests/tigera-operator.yaml
+# curl -O https://raw.githubusercontent.com/projectcalico/calico/v3.33.0/manifests/custom-resources-bpf.yaml | kubectl create -f -
+# With Helm
+helm repo add projectcalico https://docs.tigera.io/calico/charts
+kubectl create namespace tigera-operator
+helm template calico-crds projectcalico/projectcalico.org.v3 --version v3.33.0 --api-versions admissionregistration.k8s.io/v1/MutatingAdmissionPolicy | kubectl apply --server-side -f -
+helm install calico projectcalico/tigera-operator --version v3.33.0 --namespace tigera-operator
+watch kubectl get pods -n calico-system
+
 # Version matters!
-curl -L https://github.com/projectcalico/calico/releases/download/v3.25.0/calicoctl-linux-amd64 -o kubectl-calico
-chmod +x kubectl-calico
-sudo cp kubectl-calico /usr/bin
+curl -L https://github.com/projectcalico/calico/releases/download/v3.33.0/calicoctl-linux-amd64 -o calicoctl
+chmod +x calicoctl
+sudo cp calicoctl /usr/bin
+sudo ln -s /usr/bin/calicoctl /usr/bin/kubectl-calico  # To use directly inside kubectl
 kubectl calico get nodes
 
 # Install metrics server
-kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.7.2/components.yaml
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.9.0/components.yaml
 kubectl edit -n kube-system deploy metrics-server
 # Add to spec.containers.args
 # - --kubelet-insecure-tls
