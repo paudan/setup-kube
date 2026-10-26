@@ -44,7 +44,8 @@ nodeRegistration:
 apiVersion: kubeadm.k8s.io/v1beta4
 kind: ClusterConfiguration
 apiServer:
-  certSANs: $KUBERNETES_PUBLIC_ADDRESS
+  certSANs: 
+  - $KUBERNETES_PUBLIC_ADDRESS
 kubernetesVersion: v1.37.1
 networking:
   podSubnet: "192.168.0.0/16"
