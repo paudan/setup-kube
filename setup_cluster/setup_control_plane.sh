@@ -59,13 +59,13 @@ memorySwap:
 EOF
 sudo kubeadm init --config /etc/kubernetes/kubeadm-config.yaml
 
-# Remove the taint
-kubectl taint nodes --all node-role.kubernetes.io/control-plane- || true
-
 # Set admin access to cluster
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+# Remove the taint
+kubectl taint nodes --all node-role.kubernetes.io/control-plane- || true
 
 # Install Calico addon
 # Traditional way
