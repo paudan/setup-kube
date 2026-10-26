@@ -26,10 +26,36 @@ KUBERNETES_PUBLIC_ADDRESS=$(gcloud compute instances describe controller \
 # On local deployment could be similar to:
 # KUBERNETES_PUBLIC_ADDRESS=$(hostname -I | cut -d " " -f 1)
 
-sudo kubeadm init \
---pod-network-cidr=192.168.0.0/16 \
---ignore-preflight-errors=NumCPU \
---apiserver-cert-extra-sans=$KUBERNETES_PUBLIC_ADDRESS
+# Traditional way
+# sudo kubeadm init \
+# --pod-network-cidr=192.168.0.0/16 \
+# --ignore-preflight-errors=NumCPU \
+# --apiserver-cert-extra-sans=$KUBERNETES_PUBLIC_ADDRESS
+
+# For more recent versions, which allow to use swap 
+cat <<EOF | sudo tee /etc/kubernetes/kubeadm-config.yaml
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: InitConfiguration
+nodeRegistration:
+  ignorePreflightErrors:
+    - Swap
+    - NumCPU
+---
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: ClusterConfiguration
+apiServer:
+  certSANs: $KUBERNETES_PUBLIC_ADDRESS
+kubernetesVersion: v1.37.1
+networking:
+  podSubnet: "192.168.0.0/16"
+---
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+failSwapOn: false
+memorySwap:
+  swapBehavior: LimitedSwap
+EOF
+sudo kubeadm init --config /etc/kubernetes/kubeadm-config.yaml
 
 # Remove the taint
 kubectl taint nodes --all node-role.kubernetes.io/control-plane- || true
