@@ -23,6 +23,9 @@ gcloud config set compute/zone us-west1-c
 KUBERNETES_PUBLIC_ADDRESS=$(gcloud compute instances describe controller \
 --zone $(gcloud config get-value compute/zone) \
 --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
+# On local deployment could be similar to:
+# KUBERNETES_PUBLIC_ADDRESS=$(hostname -I | cut -d " " -f 1)
+
 sudo kubeadm init \
 --pod-network-cidr=192.168.0.0/16 \
 --ignore-preflight-errors=NumCPU \
