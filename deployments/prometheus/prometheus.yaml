@@ -1,0 +1,85 @@
+# Shared Prometheus (managed by the Prometheus Operator, installed separately): it picks up every ServiceMonitor, PodMonitor,
+# Probe, ScrapeConfig and PrometheusRule in any namespace, so each deployment ships its own monitor next to its workload.
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: shared
+  namespace: monitoring
+spec:
+  version: v3.5.0
+  replicas: 1
+  serviceAccountName: prometheus
+  retention: 15d
+  retentionSize: 18GB
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65534
+    fsGroup: 65534
+  storage:
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 20Gi
+  serviceMonitorNamespaceSelector:
+    matchExpressions:
+      - key: kubernetes.io/metadata.name
+        operator: Exists
+  serviceMonitorSelector:
+    matchExpressions:
+      - key: monitoring.fingraph/ignore
+        operator: DoesNotExist
+  podMonitorNamespaceSelector:
+    matchExpressions:
+      - key: kubernetes.io/metadata.name
+        operator: Exists
+  podMonitorSelector:
+    matchExpressions:
+      - key: monitoring.fingraph/ignore
+        operator: DoesNotExist
+  probeNamespaceSelector:
+    matchExpressions:
+      - key: kubernetes.io/metadata.name
+        operator: Exists
+  probeSelector:
+    matchExpressions:
+      - key: monitoring.fingraph/ignore
+        operator: DoesNotExist
+  scrapeConfigNamespaceSelector:
+    matchExpressions:
+      - key: kubernetes.io/metadata.name
+        operator: Exists
+  scrapeConfigSelector:
+    matchExpressions:
+      - key: monitoring.fingraph/ignore
+        operator: DoesNotExist
+  ruleNamespaceSelector:
+    matchExpressions:
+      - key: kubernetes.io/metadata.name
+        operator: Exists
+  ruleSelector:
+    matchExpressions:
+      - key: monitoring.fingraph/ignore
+        operator: DoesNotExist
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  selector:
+    prometheus: shared
+  ports:
+    - name: web
+      port: 9090
+      targetPort: web

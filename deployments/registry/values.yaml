@@ -1,0 +1,89 @@
+# Private registry (helm chart twuni/docker-registry 3.0.0, release "registry" in docker-registry), served as
+# https://registry.kube.org through the Traefik "websecure" entrypoint (certificate in tls.yaml, trust set up by
+# node-setup.sh). Auth comes from the registry-auth Secret that deploy.sh
+fullnameOverride: registry
+replicaCount: 1
+# CPU-based scaling only; replicas share the one RWO volume on this node
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: null
+# The shared Prometheus (infra/prometheus) scrapes port 5001 through the chart's ServiceMonitor
+metrics:
+  enabled: true
+  port: 5001
+  serviceMonitor:
+    enabled: true
+configData:
+  http:
+    debug:
+      addr: :5001
+      prometheus:
+        enabled: true
+        path: /metrics
+garbageCollect:
+  enabled: true
+  deleteUntagged: true
+  schedule: "0 1 * * *"
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+ingress:
+  enabled: true
+  className: traefik
+  path: /
+  hosts:
+    - registry.kube.org
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+  tls:
+    - secretName: docker-registry-tls
+      hosts:
+        - registry.kube.org
+persistence:
+  enabled: true
+  size: 100Gi
+  deleteEnabled: true
+  existingClaim: docker-registry-pvc
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 1
+    memory: 512Mi
+# hostPath volumes are root-owned; the registry runs as uid 1000
+initContainers:
+  - name: fix-permissions
+    image: busybox:1.37.0
+    command:
+      - sh
+      - -c
+      - chown -R 1000:1000 /var/lib/registry
+    securityContext:
+      runAsUser: 0
+      runAsNonRoot: false
+    volumeMounts:
+      - name: data
+        mountPath: /var/lib/registry
+extraEnvVars:
+  - name: REGISTRY_AUTH
+    value: htpasswd
+  - name: REGISTRY_AUTH_HTPASSWD_REALM
+    value: Registry Realm
+  - name: REGISTRY_AUTH_HTPASSWD_PATH
+    value: /auth/htpasswd
+extraVolumes:
+  - name: auth
+    secret:
+      secretName: registry-auth
+extraVolumeMounts:
+  - name: auth
+    mountPath: /auth
+    readOnly: true

@@ -1,0 +1,52 @@
+# Self-signed CA for registry.kube.org; the leaf certificate lands in the docker-registry-tls Secret used by the Ingress.
+# node-setup.sh installs the CA (secret registry-ca, key ca.crt) as trusted for Docker and containerd.
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: registry-selfsigned
+  namespace: docker-registry
+spec:
+  selfSigned:
+    crlDistributionPoints: []
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: registry-ca
+  namespace: docker-registry
+spec:
+  isCA: true
+  commonName: registry.kube.org CA
+  secretName: registry-ca
+  duration: 87600h
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: registry-selfsigned
+    kind: Issuer
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: registry-ca
+  namespace: docker-registry
+spec:
+  ca:
+    secretName: registry-ca
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: docker-registry-tls
+  namespace: docker-registry
+spec:
+  secretName: docker-registry-tls
+  dnsNames:
+    - registry.kube.org
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: registry-ca
+    kind: Issuer
