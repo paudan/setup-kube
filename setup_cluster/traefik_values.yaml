@@ -1,0 +1,44 @@
+hostNetwork: true
+deployment:
+  dnsPolicy: ClusterFirstWithHostNet
+service:
+  enabled: false
+# host ports allow only one pod at a time: stop the old pod before starting the new one
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
+    maxSurge: 0
+ingressClass:
+  enabled: true
+  isDefaultClass: true
+providers:
+  kubernetesIngress:
+    publishedService:
+      enabled: false
+# Prometheus metrics on the "metrics" entrypoint (:19100/metrics, no auth); in-cluster scrape goes through the
+# traefik-metrics Service
+metrics:
+  prometheus:
+    entryPoint: metrics
+    addEntryPointsLabels: true
+    addRoutersLabels: true
+    addServicesLabels: true
+    service:
+      enabled: true
+ports:
+  web: null
+  websecure: null
+  # internal port moved off the common 8080 to avoid a clash on the host
+  traefik:
+    port: 18080
+  # moved off 9100 to avoid a clash with node exporter on the host
+  metrics:
+    port: 19100
+    protocol: TCP
+  # HTTP entrypoints (Ingress)
+  argocd:
+    port: 8002
+    protocol: TCP
+
+    protocol: TCP
