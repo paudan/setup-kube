@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
-# Deploys the shared Prometheus (namespace monitoring) on its own; needs the Prometheus Operator and its CRDs in the cluster.
-# Usage: deploy.sh
+
 set -euo pipefail
 
-# Add Prometheus Operator CRDs (for the registry Helm chart to create ServiceMonitor for Traefik metrics)
-kubectl apply -f https://github.com/prometheus-operator/prometheus-operator/releases/download/v0.94.2/bundle.yaml
+# Namespace first, then the operator and its CRDs (Kustomize moves the bundle from "default" to "monitoring")
+kubectl apply -f infra/prometheus/namespace.yaml
+kubectl apply --server-side -k infra/prometheus/operator
+kubectl wait --for=condition=Established crd/prometheuses.monitoring.coreos.com crd/servicemonitors.monitoring.coreos.com --timeout=60s
 
-kubectl get crd prometheuses.monitoring.coreos.com servicemonitors.monitoring.coreos.com >/dev/null
-kubectl apply -f namespace.yaml
-kubectl apply -f rbac.yaml -f prometheus.yaml -f servicemonitor-traefik.yaml
+# The operator only registers the CRDs it finds at startup, so restart it in case it came up before them
+kubectl -n monitoring rollout restart deploy/prometheus-operator
+kubectl -n monitoring rollout status deploy/prometheus-operator --timeout=120s
+kubectl apply -f infra/prometheus/rbac.yaml -f infra/prometheus/prometheus.yaml -f infra/prometheus/servicemonitor-traefik.yaml
 kubectl -n monitoring wait prometheus/shared --for=condition=Available --timeout=300s
