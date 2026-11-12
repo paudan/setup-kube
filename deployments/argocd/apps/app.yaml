@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app
+  namespace: argocd
+spec:
+  project: app
+  sources:
+    - repoURL: git@github.com:paudan/app.git
+      targetRevision: main
+      path: infra/k8s
+      kustomize:
+        patches:
+          - target:
+              kind: Deployment
+              name: ^(prefect|api|ui|ingest)$
+            patch: |-
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: not-used
+                annotations:
+                  argocd.argoproj.io/sync-wave: "2"
+    - repoURL: git@github.com:paudan/app.git
+      targetRevision: main
+      path: infra/k8s/jobs
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: app
+  # Auto-sync is off: Flux deploys this stack (clusters/local/app.yaml); sync manually only if Flux is suspended
+  syncPolicy:
+    syncOptions:
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m

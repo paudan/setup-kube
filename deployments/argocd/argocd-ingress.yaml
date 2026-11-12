@@ -1,0 +1,21 @@
+# ArgoCD UI through Traefik (entrypoint "argocd" in traefik-values.yaml). Not in kustomization.yaml, which forces
+# the fingraph namespace; apply with `kubectl apply -f`. Needs server.insecure=true in argocd-cmd-params-cm.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-server
+  namespace: argocd
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: argocd
+spec:
+  ingressClassName: traefik
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  name: http

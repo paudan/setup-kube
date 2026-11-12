@@ -1,0 +1,16 @@
+# App of apps: bootstrap once with `kubectl apply -f infra/argocd/root.yaml`. No finalizer on purpose, so deleting
+# it never cascades into the databases.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: fingraph-root
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: git@github.com:paudan/fin-graphrag.git
+    targetRevision: main
+    path: infra/argocd/apps
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd

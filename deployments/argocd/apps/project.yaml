@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: fingraph
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  description: Filing forensics stack; cluster-wide services (Traefik, registry, Prometheus, storage) are deployed separately
+  sourceRepos:
+    - git@github.com:paudan/fin-graphrag.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: fingraph
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+    - group: ""
+      kind: PersistentVolume

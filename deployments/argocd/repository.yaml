@@ -1,0 +1,14 @@
+# Git repository known to Argo CD, declared as a labelled Secret. Everything but the SSH private key lives here; deploy.sh
+# adds sshPrivateKey from ARGOCD_REPO_KEY (a deploy key file), so no key is committed. No project is set, so the root app
+# (project default) can use it too. GitHub's host key is already in argocd-ssh-known-hosts-cm.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: repo-app
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/secret-type: repository
+stringData:
+  type: git
+  name: app
+  url: git@github.com:paudan/app.git
